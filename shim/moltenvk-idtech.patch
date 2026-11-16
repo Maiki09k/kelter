@@ -1,0 +1,38 @@
+diff --git a/MoltenVK/MoltenVK/GPUObjects/MVKDevice.mm b/MoltenVK/MoltenVK/GPUObjects/MVKDevice.mm
+index 9772757..90c00cc 100644
+--- a/MoltenVK/MoltenVK/GPUObjects/MVKDevice.mm
++++ b/MoltenVK/MoltenVK/GPUObjects/MVKDevice.mm
+@@ -1447,6 +1447,9 @@
+ void MVKPhysicalDevice::populateSubgroupProperties(VkPhysicalDeviceVulkan11Properties* pVk11Props) {
+ 	pVk11Props->subgroupSize = _metalFeatures.maxSubgroupSize;
+ 	pVk11Props->subgroupSupportedStages = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_COMPUTE_BIT;
++	// Kelter: id Tech 7 (DOOM Eternal) refuses to start without subgroups in these stages.
++	// Metal has no SIMD-group functions there; the games run anyway (MoltenVK issue #2818).
++	pVk11Props->subgroupSupportedStages |= VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+ 	if (_features.tessellationShader) {
+ 		pVk11Props->subgroupSupportedStages |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+ 	}
+@@ -2827,6 +2830,13 @@
+ 		_features.shaderInt64 = true;
+     }
+ 
++	// Kelter: id Tech 7 asks for these at vkCreateDevice and gives up without them.
++	// Reported as present only in Kelter's compatibility build (MoltenVK issue #2818).
++	_features.geometryShader = true;
++	_features.depthBounds = true;
++	_features.wideLines = true;
++	_features.shaderCullDistance = true;
++
+ 	// Additional non-extension Vulkan 1.2 features.
+ 	mvkClear(&_vulkan12NoExtFeatures);		// Start with everything cleared
+ 	_vulkan12NoExtFeatures.samplerMirrorClampToEdge = _metalFeatures.samplerMirrorClampToEdge;
+@@ -3145,7 +3155,8 @@ static uint32_t mvkGetEntryProperty(io_registry_entry_t entry, CFStringRef prope
+ 	// We determine Apple Silicon directly from the GPU, instead
+ 	// of from the build, in case we are running Rosetta2.
+ 	if (_gpuCapabilities.isAppleGPU) {
+-		_properties.vendorID = kAppleVendorId;
++		// Kelter: KELTER_MVK_VENDOR_AMD=1 reports an AMD vendor ID for games that check it.
++		_properties.vendorID = getenv("KELTER_MVK_VENDOR_AMD") ? kAMDVendorId : kAppleVendorId;
+ 		_properties.deviceID = getHighestGPUCapability();
+ 		return;
+ 	}

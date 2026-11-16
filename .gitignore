@@ -1,0 +1,7 @@
+.build/
+.toolchain/
+.swiftpm/
+.build-probe.exe
+*.pdb
+Resources/libMoltenVK-kelter.dylib
+*.dxvk-cache

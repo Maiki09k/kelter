@@ -1,0 +1,23 @@
+diff --git a/spirv_msl.cpp b/spirv_msl.cpp
+index c5a9d433..98d2a4b2 100644
+--- a/spirv_msl.cpp
++++ b/spirv_msl.cpp
+@@ -1682,6 +1682,7 @@ string CompilerMSL::compile()
+ 	options.version = 450;
+ 	backend.null_pointer_literal = "nullptr";
+ 	backend.float_literal_suffix = false;
++	backend.double_literal_suffix = false; // Kelter: doubles are emitted as float
+ 	backend.uint32_t_literal_suffix = true;
+ 	backend.int16_t_literal_suffix = "";
+ 	backend.uint16_t_literal_suffix = "";
+@@ -17153,7 +17154,9 @@ string CompilerMSL::type_to_glsl(const SPIRType &type, uint32_t id, bool member)
+ 		type_name = "float";
+ 		break;
+ 	case SPIRType::Double:
+-		type_name = "double"; // Currently unsupported
++		// Kelter: Metal has no double. Compute it as float instead of failing the whole shader
++		// (DOOM Eternal rounds with doubles in one compute shader; without it geometry breaks).
++		type_name = "float";
+ 		break;
+ 	case SPIRType::BFloat16:
+ 		if (!msl_options.supports_msl_version(3, 1))
